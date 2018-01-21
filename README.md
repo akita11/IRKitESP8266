@@ -1,4 +1,4 @@
-IRKitESP
+IRKitESP8266
 =====
 
 IRKit Clone on ESP8266
@@ -11,7 +11,7 @@ Toshiyuki Kawashima氏の"ESP8266IRKit" (https://github.com/toskaw/ESP8266IRKit)
 
 ## 基板データ
 
-IRKitESP.{brd,sch}がEagleデータです。適当な方法で製造してください。
+IRKitESP8266.{brd,sch}がEagleデータです。適当な方法で製造してください。
 
 ## ソースコード
 
