@@ -31,6 +31,9 @@ IRKitESP8266.{brd,sch}がEagleデータです。適当な方法で製造して�
 
 * [ESP8266IRKit](https://github.com/toskaw/ESP8266IRKit)
 
+## 直近のToDo
+* LED点滅が未実装（輝度半分として実装）なので実装したい
+
 ## Author
 
 Junichi Akita (@akita11, akita@ifdl.jp)
