@@ -5,7 +5,7 @@ IRKit Clone on ESP8266
 
 ## これは何
 
-Toshiyuki Kawashima氏の"ESP8266IRKit" (https://github.com/toskaw/ESP8266IRKit)をベースに、以下の2点の追加・改変を行ったものです。
+Toshiyuki Kawashima氏の[ESP8266IRKit](https://github.com/toskaw/ESP8266IRKit) をベースに、以下の2点の追加・改変を行ったものです。
 * ボタンを追加、長押しで初期化
 * 動作状態をLED(WS2818B)で表示
 
