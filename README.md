@@ -13,6 +13,8 @@ Toshiyuki Kawashima氏の[ESP8266IRKit](https://github.com/toskaw/ESP8266IRKit) 
 
 IRKitESP8266.{brd,sch}がEagleデータです。適当な方法で製造してください。
 
+※LED電流制限抵抗としてR4とR11の2つがありますが、どちらか一方のみの実装でよいです。流れる電流からして、R11のほうがオススメです（13Ωと書いてありますが、10Ω前後のものでよいはず）。
+
 ## ソースコード
 
 上記のToshiyuki Kawashima氏の「作り方（ソースからコンパイルする方法）」の通りに進めます。
