@@ -57,6 +57,9 @@
 #include <ESP8266mDNS.h>
 #include <aJSON.h>
 #include <base64.h>
+
+#include <Ticker.h>
+
 #define VERSION "3.2.0.3.esp8266"
 #define HOST "http://deviceapi.getirkit.com"
 #define RECV_TIMEOUT 100U
@@ -76,6 +79,9 @@ uint16 irLen = 0;
 
 // for IRkitESP8266 by akita11
 Adafruit_NeoPixel pix = Adafruit_NeoPixel(1, led_pin, NEO_GRB + NEO_KHZ800);
+Ticker ticker;
+uint8_t LEDr = 0, LEDg = 0, LEDb = 0, fBlink = 0;
+#define BLINK_INTERVAL 1000 // [ms]
 
 // for IRkitESP8266 by akita11
 // IRKit LED
@@ -86,14 +92,36 @@ Adafruit_NeoPixel pix = Adafruit_NeoPixel(1, led_pin, NEO_GRB + NEO_KHZ800);
 //  青	     正常
 //  青点滅   赤外線信号を送受信中
 // ※現在は、点滅を実装していておらず、輝度半分で点灯させている(akita11)
-void set_led(int r, int g, int b){
-  pix.setPixelColor(0, pix.Color(r, g, b));
+void set_led(int r, int g, int b, uint8_t f_blink){
+  LEDr = r; LEDg = g; LEDb = b;
+  fBlink = f_blink;
+  pix.setPixelColor(0, pix.Color(LEDr, LEDg, LEDb));
   pix.show();
+/*
   Serial.print("LED: ");
   Serial.print(r); Serial.print(' ');
   Serial.print(g); Serial.print(' ');
-  Serial.println(b);
+  Serial.print(b); Serial.print('/');
+  Serial.println(f_blink);
+*/
 }
+
+void LEDblink()
+{
+//  Serial.println('.');
+  if (fBlink != 0){
+    if (fBlink == 1){
+      pix.setPixelColor(0, pix.Color(LEDr, LEDg, LEDb));
+      fBlink = 2;
+    }
+    else if (fBlink == 2){
+      pix.setPixelColor(0, pix.Color(0, 0, 0));
+      fBlink = 1;
+    }
+    pix.show();
+  }
+}
+
 const int LED_FULL = 100;
 
 int polling = 0;
@@ -455,7 +483,7 @@ void setup() {
   Serial.println();
   pinMode(sw_pin, INPUT); digitalWrite(sw_pin, HIGH); // for IRkitESP8266 by akita11
   pix.begin(); // for IRkitESP8266 by akita11
-  set_led(LED_FULL, 0, 0);
+  set_led(LED_FULL, 0, 0, 0);
   
   EEPROM.begin(200);
   EEPROM.get<CONFIG>(0, gSetting);
@@ -464,6 +492,9 @@ void setup() {
   Serial.println(gSetting.ssid);
   Serial.println(gSetting.pass);
   Serial.println(gSetting.devicekey);
+  
+  // ref: https://www.sglabs.jp/esp-wroom-02-ticker/
+  ticker.attach_ms(BLINK_INTERVAL, LEDblink);
 
   byte mac[6];
   char buf[6];
@@ -477,12 +508,12 @@ void setup() {
   char* password;
   if (gSetting.init != DONE && gSetting.init != WAIT_RESPONSE) {
     // status: red blink // for IRkitESP8266 by akita11
-    set_led(LED_FULL/2, 0, 0);
+    set_led(LED_FULL, 0, 0, 1);
     APMode();
   }
   else {
     // status: green blink // for IRkitESP8266 by akita11
-    set_led(0, LED_FULL/2, 0);
+    set_led(0, LED_FULL, 0, 1);
     ssid = gSetting.ssid;
     password = gSetting.pass;
     WiFi.mode(WIFI_STA);
@@ -515,7 +546,7 @@ void setup() {
       Serial.print("IP address: ");
       Serial.println(WiFi.localIP());
       // status: cyan blink // for IRkitESP8266 by akita11
-      set_led(0, LED_FULL/2, LED_FULL/2);
+      set_led(0, LED_FULL, LED_FULL, 1);
       if (MDNS.begin(localName, WiFi.localIP())) {
         //MDNS.addService("http", "tcp", 80);
         MDNS.addService("irkit", "tcp", 80);
@@ -536,7 +567,7 @@ void setup() {
   webServer.begin();
   Serial.println("Web server started.");
   // status: blue // for IRkitESP8266 by akita11
-  set_led(0, 0, LED_FULL);
+  set_led(0, 0, LED_FULL, 0);
 }
 
 int sw_press_time = 0;  // for IRkitESP8266 by akita11
@@ -556,8 +587,8 @@ void loop() {
       Serial.println("factory initialize; erasing WiFi settings");
       int i;
       for (i =0; i < 5; i++){
-        set_led(LED_FULL, LED_FULL, LED_FULL); delay(500);
-        set_led(0, 0, 0); delay(500);
+        set_led(LED_FULL, LED_FULL, LED_FULL, 0); delay(500);
+        set_led(0, 0, 0, 0); delay(500);
       }
       gSetting.init = 0;
       strcpy(gSetting.ssid, "");
