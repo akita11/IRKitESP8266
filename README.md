@@ -6,7 +6,7 @@ IRKit Clone on ESP8266
 ## これは何
 
 Toshiyuki Kawashima氏の[ESP8266IRKit](https://github.com/toskaw/ESP8266IRKit) をベースに、以下の2点の追加・改変を行ったものです。
-* ボタンを追加、長押しで初期化
+* ボタンを追加、長押しで初期化(電源ON時にも有効)
 * 動作状態をLED(WS2812B)で表示
 
 ## 基板データ
@@ -39,7 +39,11 @@ IRKitESP8266.{brd,sch}がEagleデータです。適当な方法で製造して�
 * [ESP8266IRKit](https://github.com/toskaw/ESP8266IRKit)
 
 ## 直近のToDo
-* LED点滅を、一応実装した（2秒周期）が、IR受信時の点滅を本家にあわせたい。
+* LED点滅を、一応実装した（1秒周期）が、IR受信時の点滅を本家にあわせたい。
+* 基板の外形・部品位置を、オリジナル筐体にあうように、以下の修正をしたい。
+** uUSBコネクタの位置
+** 初期化タクトスイッチ
+** 角を丸める
 
 ## Author
 

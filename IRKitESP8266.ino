@@ -81,7 +81,7 @@ uint16 irLen = 0;
 Adafruit_NeoPixel pix = Adafruit_NeoPixel(1, led_pin, NEO_GRB + NEO_KHZ800);
 Ticker ticker;
 uint8_t LEDr = 0, LEDg = 0, LEDb = 0, fBlink = 0;
-#define BLINK_INTERVAL 1000 // [ms]
+#define BLINK_INTERVAL 500 // [ms], 1000->500
 
 // for IRkitESP8266 by akita11
 // IRKit LED
@@ -91,24 +91,17 @@ uint8_t LEDr = 0, LEDg = 0, LEDb = 0, fBlink = 0;
 //  水色点滅 Wi-Fi接続成功！HTTPサーバなどセットアップ中
 //  青	     正常
 //  青点滅   赤外線信号を送受信中
-// ※現在は、点滅を実装していておらず、輝度半分で点灯させている(akita11)
+//  ※現在は、青点滅は受信に同期せず、他と同じ一定周期点滅にしている(akita11)
+
 void set_led(int r, int g, int b, uint8_t f_blink){
   LEDr = r; LEDg = g; LEDb = b;
   fBlink = f_blink;
   pix.setPixelColor(0, pix.Color(LEDr, LEDg, LEDb));
   pix.show();
-/*
-  Serial.print("LED: ");
-  Serial.print(r); Serial.print(' ');
-  Serial.print(g); Serial.print(' ');
-  Serial.print(b); Serial.print('/');
-  Serial.println(f_blink);
-*/
 }
 
 void LEDblink()
 {
-//  Serial.println('.');
   if (fBlink != 0){
     if (fBlink == 1){
       pix.setPixelColor(0, pix.Color(LEDr, LEDg, LEDb));
@@ -122,7 +115,7 @@ void LEDblink()
   }
 }
 
-const int LED_FULL = 100;
+const int LED_FULL = 50; // 100 -> 50
 
 int polling = 0;
 struct CONFIG {
@@ -131,8 +124,29 @@ struct CONFIG {
   char pass[64];
   char devicekey[32];
 };
-struct irpacker_t packer_state;
+
 CONFIG gSetting;
+
+void factory_reset()
+{
+  Serial.println("factory initialize; erasing WiFi settings");
+  int i;
+  for (i =0; i < 5; i++){
+    set_led(LED_FULL, LED_FULL, LED_FULL, 0); delay(500);
+    set_led(0, 0, 0, 0); delay(500);
+  }
+  gSetting.init = 0;
+  strcpy(gSetting.ssid, "");
+  strcpy(gSetting.pass, "");
+  EEPROM.put<CONFIG>(0, gSetting);
+  EEPROM.commit();
+  EEPROM.end();
+  ESP.reset();
+}
+int sw_press_time = 0;  // for IRkitESP8266 by akita11
+const int sw_long_press_time = 500;  // [x10ms] for IRkitESP8266 by akita11
+
+struct irpacker_t packer_state;
 ESP8266WebServer webServer(80);
 AsyncClient polling_client;
 char sharedbuffer[ SHARED_BUFFER_SIZE ];
@@ -484,7 +498,7 @@ void setup() {
   pinMode(sw_pin, INPUT); digitalWrite(sw_pin, HIGH); // for IRkitESP8266 by akita11
   pix.begin(); // for IRkitESP8266 by akita11
   set_led(LED_FULL, 0, 0, 0);
-  
+
   EEPROM.begin(200);
   EEPROM.get<CONFIG>(0, gSetting);
   Serial.println("Confing:");
@@ -492,7 +506,21 @@ void setup() {
   Serial.println(gSetting.ssid);
   Serial.println(gSetting.pass);
   Serial.println(gSetting.devicekey);
-  
+
+  Serial.print("SW="); Serial.println(digitalRead(sw_pin));
+  // factory reset, if SW is pressed at boot
+  if (digitalRead(sw_pin) == 0){
+    set_led(LED_FULL, LED_FULL, LED_FULL, 0);
+    while(digitalRead(sw_pin) == 0 && sw_press_time < sw_long_press_time){
+      sw_press_time++; delay(10);
+    }
+    if (sw_press_time >= sw_long_press_time){
+      // long press --> initialization (delete WiFi config)
+      factory_reset();
+    }
+    else set_led(0, 0, 0, 0);
+  }
+
   // ref: https://www.sglabs.jp/esp-wroom-02-ticker/
   ticker.attach_ms(BLINK_INTERVAL, LEDblink);
 
@@ -570,34 +598,21 @@ void setup() {
   set_led(0, 0, LED_FULL, 0);
 }
 
-int sw_press_time = 0;  // for IRkitESP8266 by akita11
-const int sw_long_press_time = 500;  // [x10ms] for IRkitESP8266 by akita11
-
 void loop() {
   webServer.handleClient();
 
   // for IRkitESP8266 by akita11
   sw_press_time = 0;
   if (digitalRead(sw_pin) == 0){
+    set_led(LED_FULL, LED_FULL, LED_FULL, 0);
     while(digitalRead(sw_pin) == 0 && sw_press_time < sw_long_press_time){
       sw_press_time++; delay(10);
     }
     if (sw_press_time >= sw_long_press_time){
       // long press --> initialization (delete WiFi config)
-      Serial.println("factory initialize; erasing WiFi settings");
-      int i;
-      for (i =0; i < 5; i++){
-        set_led(LED_FULL, LED_FULL, LED_FULL, 0); delay(500);
-        set_led(0, 0, 0, 0); delay(500);
-      }
-      gSetting.init = 0;
-      strcpy(gSetting.ssid, "");
-      strcpy(gSetting.pass, "");
-      EEPROM.put<CONFIG>(0, gSetting);
-      EEPROM.commit();
-      EEPROM.end();
-      ESP.reset();
+      factory_reset();
     }
+    else set_led(0, 0, 0, 0);
   }
 
   static char url[256];
