@@ -507,7 +507,6 @@ void setup() {
   Serial.println(gSetting.pass);
   Serial.println(gSetting.devicekey);
 
-  Serial.print("SW="); Serial.println(digitalRead(sw_pin));
   // factory reset, if SW is pressed at boot
   if (digitalRead(sw_pin) == 0){
     set_led(LED_FULL, LED_FULL, LED_FULL, 0);
